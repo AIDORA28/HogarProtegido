@@ -1,0 +1,136 @@
+﻿<Window x:Class="HogarProtegido.Treasury.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:viewmodels="clr-namespace:HogarProtegido.Treasury.ViewModels"
+        xmlns:views="clr-namespace:HogarProtegido.Treasury.Views"
+        mc:Ignorable="d"
+        Title="Sistema de Tesorería - Hogar Protegido" 
+        Height="700" Width="1100"
+        MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="14"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{md:MaterialDesignFont}">
+
+    <Window.DataContext>
+        <viewmodels:MainViewModel/>
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar con Sombra MD -->
+        <Border Grid.Column="0" Background="#0F172A" md:ElevationAssist.Elevation="Dp8"> <!-- Slate 900 para fondo Profundo -->
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- Logo -->
+                    <RowDefinition Height="Auto"/> <!-- Saldo -->
+                    <RowDefinition Height="*"/>    <!-- Navegación -->
+                    <RowDefinition Height="Auto"/> <!-- Footer -->
+                </Grid.RowDefinitions>
+
+                <!-- Header Logo Senior -->
+                <StackPanel Grid.Row="0" Margin="0,50,0,30">
+                    <Grid HorizontalAlignment="Center">
+                        <Ellipse Width="70" Height="70" Fill="#1E293B"/> <!-- Círculo de fondo sutil -->
+                        <md:PackIcon Kind="Wallet" Foreground="{StaticResource AccentBrush}" 
+                                     Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <TextBlock Text="TESORERÍA" HorizontalAlignment="Center"
+                               Foreground="White" FontWeight="Black" FontSize="28" Margin="0,15,0,2"/>
+                    <TextBlock Text="HOGAR PROTEGIDO" HorizontalAlignment="Center"
+                               Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="Black" Opacity="0.8"/>
+                </StackPanel>
+
+                <!-- Tarjeta de Saldo Principal (Brillante y Senior) -->
+                <md:Card Grid.Row="1" Margin="20,0,20,30" Background="#1E293B" 
+                         Padding="22" UniformCornerRadius="18" md:ElevationAssist.Elevation="Dp4">
+                    <StackPanel>
+                        <TextBlock Text="DISPONIBLE EN CAJA" FontSize="11" FontWeight="Black" 
+                                   Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding SaldoTotal, StringFormat='S/ {0:N2}'}" 
+                                   FontSize="28" FontWeight="Black" Foreground="White"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </md:Card>
+
+                <!-- Menú de Navegación Refinado -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,0">
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding ShowRegistroCommand}" FontWeight="Normal">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="PlaylistPlus" Width="22" Height="22" Margin="0,0,18,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="REGISTRO DIARIO" VerticalAlignment="Center" Foreground="White"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding ShowReportesCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="FileChart" Width="22" Height="22" Margin="0,0,18,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="REPORTES Y CIERRES" VerticalAlignment="Center" Foreground="White"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SidebarButton}" Command="{Binding SalirCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <md:PackIcon Kind="Logout" Width="22" Height="22" Margin="0,0,18,0" VerticalAlignment="Center" Foreground="#F87171"/>
+                                <TextBlock Text="SALIR DEL SISTEMA" VerticalAlignment="Center" Foreground="White"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer Autoría -->
+                <Border Grid.Row="3" Background="#1E293B" Padding="0,15" CornerRadius="0">
+                    <TextBlock Text="PREMIUM TREASURY V2.5" HorizontalAlignment="Center" 
+                               Foreground="#64748B" FontSize="10" FontWeight="Black"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Área de Contenido Principal -->
+        <Grid Grid.Column="1" Background="#F5F5F5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Barra Superior (AppBar) Style Imagen -->
+            <Border Grid.Row="0" Background="White" Padding="25,15" md:ElevationAssist.Elevation="Dp1">
+                <Grid>
+                    <TextBlock Text="Libro de Caja" FontSize="24" FontWeight="Black" 
+                               Foreground="{StaticResource PrimaryBrush}" VerticalAlignment="Center"/>
+                    
+                    <!-- Burbuja de Fecha (Pill) -->
+                    <Border HorizontalAlignment="Right" Background="{StaticResource PrimaryBrush}" 
+                            CornerRadius="20" Padding="15,5">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="CalendarMonth" Foreground="White" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Hoy}" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Contenido Dinámico -->
+            <ContentControl Grid.Row="1" Content="{Binding CurrentView}" Margin="0">
+                <ContentControl.Resources>
+                    <DataTemplate DataType="{x:Type viewmodels:RegistroViewModel}">
+                        <views:RegistroView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type viewmodels:ReportesViewModel}">
+                        <views:ReportesView/>
+                    </DataTemplate>
+                </ContentControl.Resources>
+            </ContentControl>
+        </Grid>
+    </Grid>
+</Window>

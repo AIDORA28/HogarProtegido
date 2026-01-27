@@ -1,0 +1,282 @@
+<UserControl x:Class="HogarProtegido.Treasury.Views.ReportesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             mc:Ignorable="d" 
+             d:DesignHeight="1000" d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <!-- Estilo para las líneas de movimientos (Tipo Recibo) -->
+        <Style x:Key="MovementLineContent" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#424242"/>
+        </Style>
+        
+        <Style x:Key="MovementLineMonto" TargetType="TextBlock" BasedOn="{StaticResource MovementLineContent}">
+            <Setter Property="FontWeight" Value="Black"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+
+        <!-- Estilos para botones de exportación -->
+        <Style x:Key="ExportButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="15,0"/>
+            <Setter Property="md:ButtonAssist.CornerRadius" Value="8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+    </UserControl.Resources>
+    
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Selector de Vista -->
+            <RowDefinition Height="Auto"/> <!-- Filtros y Acciones -->
+            <RowDefinition Height="*"/>    <!-- Contenido Principal -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. Selector de Vista (Senior Style) -->
+        <Border Grid.Row="0" Margin="0,0,0,20" Background="#F1F5F9" CornerRadius="12" HorizontalAlignment="Center" Padding="4">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="DETALLE DIARIO" Command="{Binding SelectViewCommand}" CommandParameter="0" Width="210">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                            <Setter Property="Height" Value="40"/>
+                            <Setter Property="md:ButtonAssist.CornerRadius" Value="8"/>
+                            <Setter Property="FontWeight" Value="Black"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedViewIndex}" Value="0">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="Foreground" Value="{StaticResource PrimaryDarkBrush}"/>
+                                    <Setter Property="md:ElevationAssist.Elevation" Value="Dp1"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="RESUMEN EN LISTA" Command="{Binding SelectViewCommand}" CommandParameter="1" Width="210">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                            <Setter Property="Height" Value="40"/>
+                            <Setter Property="md:ButtonAssist.CornerRadius" Value="8"/>
+                            <Setter Property="FontWeight" Value="Black"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedViewIndex}" Value="1">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="Foreground" Value="{StaticResource PrimaryDarkBrush}"/>
+                                    <Setter Property="md:ElevationAssist.Elevation" Value="Dp1"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- 2. Cabecera de Filtros y Acciones de Exportación -->
+        <md:Card Grid.Row="1" Margin="0,0,0,30" Padding="15" UniformCornerRadius="15" md:ElevationAssist.Elevation="Dp0" Background="#F0F4F8">
+            <Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <DatePicker SelectedDate="{Binding FechaInicio}" DisplayDateEnd="{Binding Today, Mode=OneWay}" md:HintAssist.Hint="DESDE (Todos)" Width="130" Margin="0,0,10,0"/>
+                    <DatePicker SelectedDate="{Binding FechaFin}" DisplayDateStart="{Binding FechaInicio}" DisplayDateEnd="{Binding Today, Mode=OneWay}" md:HintAssist.Hint="HASTA (Todos)" Width="130" Margin="0,0,15,0"/>
+                    <Button Style="{StaticResource PrimaryButton}" Command="{Binding RestablecerCommand}" 
+                            Content="REESTABLECER" Height="40" Padding="25,0" md:ButtonAssist.CornerRadius="10" Click="Button_Click" FontWeight="Bold"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="EXPORTAR:" VerticalAlignment="Center" FontWeight="Black" FontSize="11" Foreground="#64748B" Margin="0,0,15,0"/>
+                    
+                    <Button Style="{StaticResource ExportButton}" Command="{Binding ExportarExcelCommand}" Foreground="#2E7D32">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="FileExcel" Margin="0,0,8,0"/>
+                            <TextBlock Text="EXCEL"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource ExportButton}" Command="{Binding ExportarPDFCommand}" Foreground="#C62828" Margin="10,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <md:PackIcon Kind="FilePdfBox" Margin="0,0,8,0"/>
+                            <TextBlock Text="PDF"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </md:Card>
+
+        <!-- 3. Área de Contenido -->
+        <Grid Grid.Row="2">
+            
+            <!-- VISTA A: DETALLE POR DÍA (La Boleta Senior) -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto" md:ScrollViewerAssist.IsAutoHideEnabled="True">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedViewIndex}" Value="0">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ScrollViewer.Style>
+                <ItemsControl ItemsSource="{Binding DailyReports}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <md:Card Margin="0,0,0,40" Padding="0" UniformCornerRadius="20" md:ElevationAssist.Elevation="Dp3">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="380"/></Grid.ColumnDefinitions>
+                                    
+                                    <Border Grid.Column="0" Padding="25" BorderBrush="#F0F0F0" BorderThickness="0,0,1,0">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                                                <Border Background="{StaticResource PrimaryBrush}" Width="4" Height="24" CornerRadius="2" Margin="0,0,12,0"/>
+                                                <TextBlock Text="{Binding Fecha, StringFormat='{}{0:dddd dd MMMM yyyy}', ConverterCulture='es-ES'}" 
+                                                           FontSize="18" FontWeight="Black" Foreground="{StaticResource PrimaryDarkBrush}"/>
+                                            </StackPanel>
+
+                                            <!-- Ingresos -->
+                                            <TextBlock Text="INGRESOS" FontSize="11" FontWeight="Black" Foreground="{StaticResource IncomeBrush}" Margin="0,0,0,10"/>
+                                            <ItemsControl ItemsSource="{Binding Ingresos}" Margin="0,0,0,25">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="#F5F5F5" BorderThickness="0,0,0,1" Padding="0,8">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                <md:PackIcon Kind="AddCircle" Foreground="{StaticResource IncomeBrush}" Opacity="0.5" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Concepto}" Style="{StaticResource MovementLineContent}"/>
+                                                                <TextBlock Grid.Column="2" Text="{Binding Monto, StringFormat='S/ {0:N2}'}" Style="{StaticResource MovementLineMonto}" Foreground="{StaticResource IncomeBrush}"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <!-- Gastos -->
+                                            <TextBlock Text="EGRESOS" FontSize="11" FontWeight="Black" Foreground="{StaticResource ExpenseBrush}" Margin="0,0,0,10"/>
+                                            <ItemsControl ItemsSource="{Binding Egresos}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="#F5F5F5" BorderThickness="0,0,0,1" Padding="0,8">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                                <md:PackIcon Kind="MinusCircle" Foreground="{StaticResource ExpenseBrush}" Opacity="0.5" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Concepto}" Style="{StaticResource MovementLineContent}"/>
+                                                                <TextBlock Grid.Column="2" Text="{Binding Monto, StringFormat='S/ {0:N2}'}" Style="{StaticResource MovementLineMonto}" Foreground="{StaticResource ExpenseBrush}"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="1" Background="#F8FAFC" Padding="25" CornerRadius="0,20,20,0">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="CIERRE DEL DÍA" FontSize="12" FontWeight="Black" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,0,0,25"/>
+                                            <Border Background="White" CornerRadius="15" Padding="20" md:ElevationAssist.Elevation="Dp1">
+                                                <StackPanel>
+                                                    <Grid Margin="0,0,0,12">
+                                                        <TextBlock Text="Ingresos" Foreground="#64748B"/>
+                                                        <TextBlock Text="{Binding TotalIngresos, StringFormat='+ S/ {0:N2}'}" Foreground="{StaticResource IncomeBrush}" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                    <Grid Margin="0,0,0,15">
+                                                        <TextBlock Text="Gastos" Foreground="#64748B"/>
+                                                        <TextBlock Text="{Binding TotalEgresos, StringFormat='- S/ {0:N2}'}" Foreground="{StaticResource ExpenseBrush}" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                    <Border Height="1" Background="#E2E8F0" Margin="0,0,0,15"/>
+                                                    <Grid>
+                                                        <TextBlock Text="RESULTADO" FontWeight="Black" Foreground="#1E293B"/>
+                                                        <TextBlock Text="{Binding TotalDia, StringFormat='S/ {0:N2}'}" FontSize="18" FontWeight="Black" Foreground="#1E293B" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Border>
+                                            <md:PackIcon Kind="ArrowDown" HorizontalAlignment="Center" Foreground="#CBD5E1" Margin="0,15"/>
+                                            <Grid Margin="0,0,0,25">
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="SALDO AYER" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding SaldoAyer, StringFormat='S/ {0:N2}'}" FontSize="15" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="+" VerticalAlignment="Center" Foreground="#CBD5E1" FontSize="20" FontWeight="Black"/>
+                                                <StackPanel Grid.Column="2">
+                                                    <TextBlock Text="GANANCIA" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding TotalDia, StringFormat='S/ {0:N2}'}" FontSize="15" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                            <Border Background="{StaticResource PrimaryDarkBrush}" CornerRadius="12" Padding="20,15" md:ElevationAssist.Elevation="Dp4">
+                                                <StackPanel>
+                                                    <TextBlock Text="TOTAL DISPONIBLE" FontSize="11" FontWeight="Bold" Foreground="#A7F3D0" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                                                    <TextBlock Text="{Binding SaldoHoy, StringFormat='S/ {0:N2}'}" FontSize="32" FontWeight="Black" Foreground="White" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </md:Card>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- VISTA B: RESUMEN EN LISTA (El Historial Senior) -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedViewIndex}" Value="1">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ScrollViewer.Style>
+                <md:Card UniformCornerRadius="20" Padding="0" md:ElevationAssist.Elevation="Dp2">
+                    <StackPanel>
+                        <!-- Cabecera de la Lista -->
+                        <Border Background="#F8FAFC" Padding="25,15" CornerRadius="20,20,0,0" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="180"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="FECHA" FontWeight="Black" Foreground="#64748B" FontSize="11"/>
+                                <TextBlock Grid.Column="1" Text="INGRESOS (+)" FontWeight="Black" Foreground="#64748B" FontSize="11" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="EGRESOS (-)" FontWeight="Black" Foreground="#64748B" FontSize="11" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="NETO" FontWeight="Black" Foreground="#64748B" FontSize="11" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="4" Text="SALDO CAJA" FontWeight="Black" Foreground="#64748B" FontSize="11" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding DailyReports}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="25,18">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="180"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                <md:PackIcon Kind="Calendar" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Fecha, StringFormat='dd/MM/yyyy'}" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="1" Text="{Binding TotalIngresos, StringFormat='S/ {0:N2}'}" Foreground="{StaticResource IncomeBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding TotalEgresos, StringFormat='S/ {0:N2}'}" Foreground="{StaticResource ExpenseBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding TotalDia, StringFormat='S/ {0:N2}'}" FontWeight="Bold" Foreground="#475569" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            
+                                            <Border Grid.Column="4" Background="#ECFDF5" CornerRadius="8" Padding="12,5" HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding SaldoHoy, StringFormat='S/ {0:N2}'}" FontWeight="Black" Foreground="{StaticResource PrimaryDarkBrush}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </md:Card>
+            </ScrollViewer>
+
+        </Grid>
+    </Grid>
+</UserControl>
