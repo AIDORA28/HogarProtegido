@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36915.13 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HogarProtegido.Treasury", "HogarProtegido.Treasury\HogarProtegido.Treasury.csproj", "{24CA1BBE-B28F-6840-1814-9306B7FDF8CC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{24CA1BBE-B28F-6840-1814-9306B7FDF8CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24CA1BBE-B28F-6840-1814-9306B7FDF8CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24CA1BBE-B28F-6840-1814-9306B7FDF8CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24CA1BBE-B28F-6840-1814-9306B7FDF8CC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CFEA82CF-85EC-43ED-AF3B-26DF9F72EF44}
+	EndGlobalSection
+EndGlobal

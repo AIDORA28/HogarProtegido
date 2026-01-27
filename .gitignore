@@ -40,3 +40,8 @@ bld/
 
 # User settings
 appsettings.Development.json
+
+# Build publishing
+HogarProtegido.Treasury/publish-standalone/
+HogarProtegido.Treasury/publish-unico/
+

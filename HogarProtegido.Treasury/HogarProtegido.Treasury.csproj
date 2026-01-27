@@ -6,6 +6,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+     <!-- Icono de la aplicación -->
+    <ApplicationIcon>icoCasa.ico</ApplicationIcon>
+    
+    <!-- Información de la aplicación -->
+    <AssemblyName>HogarProtegido.Treasury</AssemblyName>
+    <Product>Hogar Protegido - Sistema de Tesorería</Product>
+    <Company>Hogar Protegido</Company>
+    <Copyright>Copyright © 2026 Hogar Protegido</Copyright>
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +33,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+    <Resource Include="icoCasa.ico" />
   </ItemGroup>
 
 </Project>

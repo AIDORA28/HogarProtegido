@@ -137,7 +137,7 @@ namespace HogarProtegido.Treasury.ViewModels
                 {
                     using var writer = new iText.Kernel.Pdf.PdfWriter(sfd.FileName);
                     using var pdf = new iText.Kernel.Pdf.PdfDocument(writer);
-                    var document = new iText.Layout.Document(pdf, iText.Kernel.Geom.PageSize.A4);
+                    using var document = new iText.Layout.Document(pdf, iText.Kernel.Geom.PageSize.A4);
                     
                     document.SetMargins(40, 30, 50, 30); // Top, Right, Bottom, Left (más espacio para footer)
 
@@ -228,28 +228,28 @@ namespace HogarProtegido.Treasury.ViewModels
 
                         var dayCard = new iText.Layout.Element.Div()
                             .SetBackgroundColor(new iText.Kernel.Colors.DeviceRgb(250, 250, 250))
-                            .SetBorder(new iText.Layout.Borders.SolidBorder(accentColor, 1f))
-                            .SetPadding(12)
-                            .SetMarginBottom(15)
+                            .SetBorder(new iText.Layout.Borders.SolidBorder(accentColor, 2f))
+                            .SetPadding(18)
+                            .SetMarginBottom(20)
                             .SetKeepTogether(true);
 
                         // Encabezado de la fecha
                         var dateHeader = new iText.Layout.Element.Paragraph($"📅 {day.Fecha:dddd, dd 'de' MMMM 'de' yyyy}".ToUpper())
-                            .SetFontSize(12)
+                            .SetFontSize(14)
                             .SetFontColor(primaryColor)
-                            .SetMarginBottom(10);
+                            .SetMarginBottom(12);
                         dayCard.Add(dateHeader);
 
                         // === TABLA DE INGRESOS ===
                         var ingLabel = new iText.Layout.Element.Paragraph("💰 INGRESOS (+)")
-                            .SetFontSize(10)
+                            .SetFontSize(11)
                             .SetFontColor(new iText.Kernel.Colors.DeviceRgb(46, 125, 50))
-                            .SetMarginBottom(5);
+                            .SetMarginBottom(6);
                         dayCard.Add(ingLabel);
 
                         var tIng = new iText.Layout.Element.Table(iText.Layout.Properties.UnitValue.CreatePercentArray(new float[] { 75, 25 }))
                             .UseAllAvailableWidth()
-                            .SetMarginBottom(10);
+                            .SetMarginBottom(12);
                         
                         tIng.AddHeaderCell(CreateHeaderCell("Concepto/Venta"));
                         tIng.AddHeaderCell(CreateHeaderCell("Monto"));
@@ -280,14 +280,14 @@ namespace HogarProtegido.Treasury.ViewModels
 
                         // === TABLA DE EGRESOS ===
                         var egrLabel = new iText.Layout.Element.Paragraph("💸 EGRESOS / GASTOS (-)")
-                            .SetFontSize(10)
+                            .SetFontSize(11)
                             .SetFontColor(new iText.Kernel.Colors.DeviceRgb(198, 40, 40))
-                            .SetMarginBottom(5);
+                            .SetMarginBottom(6);
                         dayCard.Add(egrLabel);
 
                         var tEgr = new iText.Layout.Element.Table(iText.Layout.Properties.UnitValue.CreatePercentArray(new float[] { 75, 25 }))
                             .UseAllAvailableWidth()
-                            .SetMarginBottom(10);
+                            .SetMarginBottom(12);
                         
                         tEgr.AddHeaderCell(CreateHeaderCell("Concepto/Responsable"));
                         tEgr.AddHeaderCell(CreateHeaderCell("Monto"));
@@ -318,22 +318,22 @@ namespace HogarProtegido.Treasury.ViewModels
 
                         var balanceCard = new iText.Layout.Element.Div()
                             .SetBackgroundColor(new iText.Kernel.Colors.DeviceRgb(224, 247, 250))
-                            .SetBorder(new iText.Layout.Borders.SolidBorder(primaryColor, 1.5f))
-                            .SetPadding(10)
-                            .SetMarginTop(5);
+                            .SetBorder(new iText.Layout.Borders.SolidBorder(primaryColor, 2f))
+                            .SetPadding(12)
+                            .SetMarginTop(8);
 
                         var balanceTitle = new iText.Layout.Element.Paragraph("📊 BALANCE DE CIERRE")
-                            .SetFontSize(10)
+                            .SetFontSize(11)
                             .SetFontColor(primaryColor)
-                            .SetMarginBottom(5);
+                            .SetMarginBottom(6);
                         balanceCard.Add(balanceTitle);
 
                         var balanceGrid = new iText.Layout.Element.Table(iText.Layout.Properties.UnitValue.CreatePercentArray(new float[] { 60, 40 }))
                             .UseAllAvailableWidth();
                         
-                        balanceGrid.AddCell(CreateBalanceRow("Saldo Inicial (Día anterior)", $"S/ {day.SaldoAyer:N2}"));
-                        balanceGrid.AddCell(CreateBalanceRow("Mov. del día (Ing - Egr)", $"S/ {day.TotalDia:N2}", day.TotalDia < 0));
-                        balanceGrid.AddCell(CreateBalanceRow("SALDO FINAL EN CAJA", $"S/ {day.SaldoHoy:N2}", false, true));
+                        CreateBalanceRow(balanceGrid, "Saldo Inicial (Día anterior)", $"S/ {day.SaldoAyer:N2}");
+                        CreateBalanceRow(balanceGrid, "Mov. del día (Ing - Egr)", $"S/ {day.TotalDia:N2}", day.TotalDia < 0);
+                        CreateBalanceRow(balanceGrid, "SALDO FINAL EN CAJA", $"S/ {day.SaldoHoy:N2}", false, true);
 
                         balanceCard.Add(balanceGrid);
                         dayCard.Add(balanceCard);
@@ -344,13 +344,10 @@ namespace HogarProtegido.Treasury.ViewModels
                         currentY -= estimatedHeightForDay;
                     }
 
-                    // CRÍTICO: Cerrar el document ANTES de agregar footers
-                    document.Close();
 
-                    // ===== PIE DE PÁGINA CON NUMERACIÓN =====
-                    AddPageNumbers(pdf, primaryColor);
-
-                    // El pdf se cerrará automáticamente por el using statement
+                    // NOTA: No llamar a document.Close() manualmente ni a AddPageNumbers()
+                    // porque causa conflictos con iText7. El using statement cierra automáticamente.
+                    // TODO: Implementar footers usando PageEvent handlers en futuras versiones.
                     
                     System.Windows.MessageBox.Show("✅ PDF generado exitosamente.", "Exportación Completa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
@@ -419,7 +416,7 @@ namespace HogarProtegido.Treasury.ViewModels
                 .SetPadding(6);
         }
 
-        private iText.Layout.Element.Cell CreateBalanceRow(string label, string value, bool isNegative = false, bool isFinal = false)
+        private void CreateBalanceRow(iText.Layout.Element.Table table, string label, string value, bool isNegative = false, bool isFinal = false)
         {
             var labelCell = new iText.Layout.Element.Cell()
                 .Add(new iText.Layout.Element.Paragraph(label)
@@ -442,7 +439,9 @@ namespace HogarProtegido.Treasury.ViewModels
                 valueCell.SetBackgroundColor(bgcolor);
             }
 
-            return labelCell;
+            // Agregar AMBAS celdas a la tabla
+            table.AddCell(labelCell);
+            table.AddCell(valueCell);
         }
 
         private void AddPageNumbers(iText.Kernel.Pdf.PdfDocument pdf, iText.Kernel.Colors.Color color)
@@ -479,39 +478,232 @@ namespace HogarProtegido.Treasury.ViewModels
             if (sfd.ShowDialog() == true)
             {
                 using var workbook = new ClosedXML.Excel.XLWorkbook();
-                var ws = workbook.Worksheets.Add("Balance Diario");
+                var ws = workbook.Worksheets.Add("Reporte Detallado");
 
-                // Headers
-                ws.Cell(1, 1).Value = "Fecha";
-                ws.Cell(1, 2).Value = "Ingresos";
-                ws.Cell(1, 3).Value = "Gastos";
-                ws.Cell(1, 4).Value = "Saldo Diario";
-                ws.Cell(1, 5).Value = "Caja Total";
+                // Configurar página para impresión
+                ws.PageSetup.PageOrientation = ClosedXML.Excel.XLPageOrientation.Portrait;
+                ws.PageSetup.PaperSize = ClosedXML.Excel.XLPaperSize.A4Paper;
+                ws.PageSetup.Margins.Left = 0.5;
+                ws.PageSetup.Margins.Right = 0.5;
 
-                var headerRange = ws.Range(1, 1, 1, 5);
-                headerRange.Style.Font.Bold = true;
-                headerRange.Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.Teal;
-                headerRange.Style.Font.FontColor = ClosedXML.Excel.XLColor.White;
+                int currentRow = 1;
 
-                int row = 2;
-                foreach (var r in DailyReports)
+                // ===== TÍTULO PRINCIPAL =====
+                ws.Cell(currentRow, 1).Value = "HOGAR PROTEGIDO - REPORTE DETALLADO DE CAJA";
+                ws.Range(currentRow, 1, currentRow, 5).Merge();
+                ws.Cell(currentRow, 1).Style.Font.FontSize = 16;
+                ws.Cell(currentRow, 1).Style.Font.Bold = true;
+                ws.Cell(currentRow, 1).Style.Font.FontColor = ClosedXML.Excel.XLColor.White;
+                ws.Cell(currentRow, 1).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(0, 121, 107);
+                ws.Cell(currentRow, 1).Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Center;
+                ws.Cell(currentRow, 1).Style.Alignment.Vertical = ClosedXML.Excel.XLAlignmentVerticalValues.Center;
+                ws.Row(currentRow).Height = 30;
+                currentRow += 2;
+
+                // ===== RESUMEN EJECUTIVO =====
+                var totalIngresos = DailyReports.Sum(d => d.TotalIngresos);
+                var totalEgresos = DailyReports.Sum(d => d.TotalEgresos);
+                var saldoFinal = DailyReports.FirstOrDefault()?.SaldoHoy ?? 0; // Primer día (más reciente)
+
+                ws.Cell(currentRow, 1).Value = "Días Reportados:";
+                ws.Cell(currentRow, 1).Style.Font.Bold = true;
+                ws.Cell(currentRow, 2).Value = DailyReports.Count;
+
+                ws.Cell(currentRow, 3).Value = "Total Ingresos:";
+                ws.Cell(currentRow, 3).Style.Font.Bold = true;
+                ws.Cell(currentRow, 4).Value = totalIngresos;
+                ws.Cell(currentRow, 4).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                ws.Cell(currentRow, 4).Style.Font.FontColor = ClosedXML.Excel.XLColor.Green;
+
+                currentRow++;
+                ws.Cell(currentRow, 3).Value = "Total Egresos:";
+                ws.Cell(currentRow, 3).Style.Font.Bold = true;
+                ws.Cell(currentRow, 4).Value = totalEgresos;
+                ws.Cell(currentRow, 4).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                ws.Cell(currentRow, 4).Style.Font.FontColor = ClosedXML.Excel.XLColor.Red;
+
+                currentRow++;
+                ws.Cell(currentRow, 3).Value = "Saldo Final en Caja:";
+                ws.Cell(currentRow, 3).Style.Font.Bold = true;
+                ws.Cell(currentRow, 3).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(178, 223, 219);
+                ws.Cell(currentRow, 4).Value = saldoFinal;
+                ws.Cell(currentRow, 4).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                ws.Cell(currentRow, 4).Style.Font.Bold = true;
+                ws.Cell(currentRow, 4).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(178, 223, 219);
+
+                currentRow += 3;
+
+                // ===== DETALLE POR DÍA =====
+                foreach (var day in DailyReports)
                 {
-                    ws.Cell(row, 1).Value = r.Fecha;
-                    ws.Cell(row, 2).Value = r.TotalIngresos;
-                    ws.Cell(row, 3).Value = r.TotalEgresos;
-                    ws.Cell(row, 4).Value = r.TotalDia;
-                    ws.Cell(row, 5).Value = r.SaldoHoy;
-                    
-                    if (r.TotalDia < 0) ws.Cell(row, 4).Style.Font.FontColor = ClosedXML.Excel.XLColor.Red;
-                    row++;
+                    // ENCABEZADO DEL DÍA
+                    ws.Cell(currentRow, 1).Value = day.Fecha.ToString("dddd, dd 'de' MMMM 'de' yyyy").ToUpper();
+                    ws.Range(currentRow, 1, currentRow, 5).Merge();
+                    ws.Cell(currentRow, 1).Style.Font.Bold = true;
+                    ws.Cell(currentRow, 1).Style.Font.FontSize = 12;
+                    ws.Cell(currentRow, 1).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.LightGray;
+                    ws.Cell(currentRow, 1).Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Left;
+                    ws.Cell(currentRow, 1).Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Medium;
+                    ws.Row(currentRow).Height = 25;
+                    currentRow++;
+
+                    // TABLA DE INGRESOS
+                    if (day.Ingresos.Any())
+                    {
+                        ws.Cell(currentRow, 1).Value = "INGRESOS (+)";
+                        ws.Cell(currentRow, 1).Style.Font.Bold = true;
+                        ws.Cell(currentRow, 1).Style.Font.FontColor = ClosedXML.Excel.XLColor.DarkGreen;
+                        currentRow++;
+
+                        // Headers de ingresos
+                        ws.Cell(currentRow, 1).Value = "Concepto/Venta";
+                        ws.Cell(currentRow, 2).Value = "Monto";
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Font.Bold = true;
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(220, 237, 200);
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+                        currentRow++;
+
+                        // Datos de ingresos
+                        foreach (var mov in day.Ingresos)
+                        {
+                            ws.Cell(currentRow, 1).Value = mov.Concepto;
+                            ws.Cell(currentRow, 2).Value = mov.Monto;
+                            ws.Cell(currentRow, 2).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                            ws.Range(currentRow, 1, currentRow, 2).Style.Border.BottomBorder = ClosedXML.Excel.XLBorderStyleValues.Hair;
+                            currentRow++;
+                        }
+
+                        // Total ingresos
+                        ws.Cell(currentRow, 1).Value = "TOTAL INGRESOS";
+                        ws.Cell(currentRow, 1).Style.Font.Bold = true;
+                        ws.Cell(currentRow, 1).Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Right;
+                        ws.Cell(currentRow, 2).Value = day.TotalIngresos;
+                        ws.Cell(currentRow, 2).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                        ws.Cell(currentRow, 2).Style.Font.Bold = true;
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(220, 237, 200);
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Border.TopBorder = ClosedXML.Excel.XLBorderStyleValues.Medium;
+                        currentRow++;
+                    }
+                    else
+                    {
+                        ws.Cell(currentRow, 1).Value = "INGRESOS (+): Sin ingresos registrados";
+                        ws.Cell(currentRow, 1).Style.Font.Italic = true;
+                        ws.Cell(currentRow, 1).Style.Font.FontColor = ClosedXML.Excel.XLColor.Gray;
+                        currentRow++;
+                    }
+
+                    currentRow++; // Espacio entre secciones
+
+                    // TABLA DE EGRESOS
+                    if (day.Egresos.Any())
+                    {
+                        ws.Cell(currentRow, 1).Value = "EGRESOS / GASTOS (-)";
+                        ws.Cell(currentRow, 1).Style.Font.Bold = true;
+                        ws.Cell(currentRow, 1).Style.Font.FontColor = ClosedXML.Excel.XLColor.DarkRed;
+                        currentRow++;
+
+                        // Headers de egresos
+                        ws.Cell(currentRow, 1).Value = "Concepto/Responsable";
+                        ws.Cell(currentRow, 2).Value = "Monto";
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Font.Bold = true;
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(255, 205, 210);
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
+                        currentRow++;
+
+                        // Datos de egresos
+                        foreach (var mov in day.Egresos)
+                        {
+                            ws.Cell(currentRow, 1).Value = mov.Concepto;
+                            ws.Cell(currentRow, 2).Value = mov.Monto;
+                            ws.Cell(currentRow, 2).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                            ws.Range(currentRow, 1, currentRow, 2).Style.Border.BottomBorder = ClosedXML.Excel.XLBorderStyleValues.Hair;
+                            currentRow++;
+                        }
+
+                        // Total egresos
+                        ws.Cell(currentRow, 1).Value = "TOTAL EGRESOS";
+                        ws.Cell(currentRow, 1).Style.Font.Bold = true;
+                        ws.Cell(currentRow, 1).Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Right;
+                        ws.Cell(currentRow, 2).Value = day.TotalEgresos;
+                        ws.Cell(currentRow, 2).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                        ws.Cell(currentRow, 2).Style.Font.Bold = true;
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(255, 205, 210);
+                        ws.Range(currentRow, 1, currentRow, 2).Style.Border.TopBorder = ClosedXML.Excel.XLBorderStyleValues.Medium;
+                        currentRow++;
+                    }
+                    else
+                    {
+                        ws.Cell(currentRow, 1).Value = "EGRESOS (-): Sin egresos registrados";
+                        ws.Cell(currentRow, 1).Style.Font.Italic = true;
+                        ws.Cell(currentRow, 1).Style.Font.FontColor = ClosedXML.Excel.XLColor.Gray;
+                        currentRow++;
+                    }
+
+                    currentRow++; // Espacio entre secciones
+
+                    // BALANCE DE CIERRE
+                    ws.Cell(currentRow, 1).Value = "BALANCE DE CIERRE";
+                    ws.Range(currentRow, 1, currentRow, 2).Merge();
+                    ws.Cell(currentRow, 1).Style.Font.Bold = true;
+                    ws.Cell(currentRow, 1).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(224, 247, 250);
+                    ws.Cell(currentRow, 1).Style.Alignment.Horizontal = ClosedXML.Excel.XLAlignmentHorizontalValues.Center;
+                    ws.Cell(currentRow, 1).Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Medium;
+                    currentRow++;
+
+                    ws.Cell(currentRow, 1).Value = "Saldo Inicial (Día anterior)";
+                    ws.Cell(currentRow, 2).Value = day.SaldoAyer;
+                    ws.Cell(currentRow, 2).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                    currentRow++;
+
+                    ws.Cell(currentRow, 1).Value = "Movimiento del día (Ing - Egr)";
+                    ws.Cell(currentRow, 2).Value = day.TotalDia;
+                    ws.Cell(currentRow, 2).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                    if (day.TotalDia < 0) ws.Cell(currentRow, 2).Style.Font.FontColor = ClosedXML.Excel.XLColor.Red;
+                    currentRow++;
+
+                    ws.Cell(currentRow, 1).Value = "SALDO FINAL EN CAJA";
+                    ws.Cell(currentRow, 1).Style.Font.Bold = true;
+                    ws.Cell(currentRow, 2).Value = day.SaldoHoy;
+                    ws.Cell(currentRow, 2).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
+                    ws.Cell(currentRow, 2).Style.Font.Bold = true;
+                    ws.Range(currentRow, 1, currentRow, 2).Style.Fill.BackgroundColor = ClosedXML.Excel.XLColor.FromArgb(178, 223, 219);
+                    ws.Range(currentRow, 1, currentRow, 2).Style.Border.TopBorder = ClosedXML.Excel.XLBorderStyleValues.Medium;
+                    currentRow++;
+
+                    currentRow += 2; // Espacio grande entre días
                 }
 
-                ws.Columns().AdjustToContents();
-                ws.Column(1).Width = 15; // Asegurar ancho para la fecha
-                ws.Range(2, 2, row - 1, 5).Style.NumberFormat.Format = "[$S/ ]#,##0.00";
-                
-                workbook.SaveAs(sfd.FileName);
-                System.Windows.MessageBox.Show("Excel generado con éxito.");
+                // Ajustar anchos de columna
+                ws.Column(1).Width = 40; // Concepto
+                ws.Column(2).Width = 15; // Monto
+                ws.Column(3).Width = 20; // Etiquetas resumen
+                ws.Column(4).Width = 15; // Valores resumen
+
+                try
+                {
+                    workbook.SaveAs(sfd.FileName);
+                    System.Windows.MessageBox.Show("✅ Excel generado exitosamente con formato profesional.", "Exportación Completa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                }
+                catch (System.IO.IOException ex) when (ex.HResult == unchecked((int)0x80070020))
+                {
+                    System.Windows.MessageBox.Show(
+                        $"⚠️ No se puede guardar el archivo porque ya está abierto.\n\n" +
+                        $"Por favor:\n" +
+                        $"1. Cierra el archivo '{System.IO.Path.GetFileName(sfd.FileName)}' en Excel\n" +
+                        $"2. O elige un nombre diferente para el archivo\n\n" +
+                        $"Luego intenta exportar nuevamente.",
+                        "Archivo en Uso",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(
+                        $"Error al generar Excel: {ex.Message}",
+                        "Error",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Error);
+                }
             }
         }
 
@@ -556,7 +748,22 @@ namespace HogarProtegido.Treasury.ViewModels
                 lastBalance = item.SaldoHoy;
             }
 
+            // Invertir para mostrar días más recientes primero
             reportList.Reverse();
+            
+            // RECALCULAR SaldoAyer después del reverse para mantener continuidad
+            for (int i = 0; i < reportList.Count; i++)
+            {
+                if (i == reportList.Count - 1)
+                {
+                    reportList[i].SaldoAyer = 0; // El día más antiguo (ahora al final) empieza en 0
+                }
+                else
+                {
+                    reportList[i].SaldoAyer = reportList[i + 1].SaldoHoy; // Saldo inicial = saldo final del día siguiente (que cronológicamente es el anterior)
+                }
+            }
+            
             foreach(var item in reportList) DailyReports.Add(item);
 
         }
