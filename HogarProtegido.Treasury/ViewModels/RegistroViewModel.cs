@@ -9,10 +9,10 @@ namespace HogarProtegido.Treasury.ViewModels
     public class RegistroViewModel : ViewModelBase
     {
         private string _conceptoIngreso = string.Empty;
-        private decimal? _montoIngreso;
+        private string _montoIngreso = string.Empty;
         
         private string _conceptoEgreso = string.Empty;
-        private decimal? _montoEgreso;
+        private string _montoEgreso = string.Empty;
 
         private DateTime _fecha = DateTime.Today;
         private readonly MainViewModel _mainViewModel;
@@ -59,7 +59,7 @@ namespace HogarProtegido.Treasury.ViewModels
             set => SetProperty(ref _conceptoIngreso, value);
         }
 
-        public decimal? MontoIngreso
+        public string MontoIngreso
         {
             get => _montoIngreso;
             set => SetProperty(ref _montoIngreso, value);
@@ -71,7 +71,7 @@ namespace HogarProtegido.Treasury.ViewModels
             set => SetProperty(ref _conceptoEgreso, value);
         }
 
-        public decimal? MontoEgreso
+        public string MontoEgreso
         {
             get => _montoEgreso;
             set => SetProperty(ref _montoEgreso, value);
@@ -151,14 +151,26 @@ namespace HogarProtegido.Treasury.ViewModels
             TipoMovimiento tipo = (tipoStr == "Ingreso") ? TipoMovimiento.Ingreso : TipoMovimiento.Egreso;
 
             string concepto = tipo == TipoMovimiento.Ingreso ? ConceptoIngreso : ConceptoEgreso;
-            decimal? monto = tipo == TipoMovimiento.Ingreso ? MontoIngreso : MontoEgreso;
+            string montoTexto = tipo == TipoMovimiento.Ingreso ? MontoIngreso : MontoEgreso;
 
-            if (string.IsNullOrWhiteSpace(concepto) || !monto.HasValue || monto <= 0) return;
+            if (string.IsNullOrWhiteSpace(concepto) || string.IsNullOrWhiteSpace(montoTexto)) return;
+
+            // Intentar parsear el monto manejando tanto punto como coma como separador decimal
+            string montoNormalizado = montoTexto.Replace(',', '.');
+            if (!decimal.TryParse(montoNormalizado, 
+                System.Globalization.NumberStyles.Any, 
+                System.Globalization.CultureInfo.InvariantCulture, 
+                out decimal montoParsed))
+            {
+                return;
+            }
+
+            if (montoParsed <= 0) return;
 
             var nuevo = new Movimiento
             {
                 Concepto = concepto,
-                Monto = monto.Value,
+                Monto = montoParsed,
                 Fecha = Fecha,
                 Tipo = tipo
             };
@@ -167,13 +179,13 @@ namespace HogarProtegido.Treasury.ViewModels
             {
                 SessionIngresos.Add(nuevo);
                 ConceptoIngreso = string.Empty;
-                MontoIngreso = null;
+                MontoIngreso = string.Empty;
             }
             else
             {
                 SessionEgresos.Add(nuevo);
                 ConceptoEgreso = string.Empty;
-                MontoEgreso = null;
+                MontoEgreso = string.Empty;
             }
 
             RecalcularSessionTotals();
